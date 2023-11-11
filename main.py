@@ -161,7 +161,187 @@ def menu():
                     else:
                         print(f"No se encontraron publicaciones con el hashtag '{hashtag_busqueda}'.")
         elif opcion == "3":
-            pass
+            opcionGI = input("1. Seguir a un usuario\n2. Dejar de seguir a un usuario\n3. Comentar una publicación\n4. Dar like a una publicación\n5. Eliminar comentario de una publicación\n6. Acceder al perfil de otro usuario desde likes o comentarios\n7. Gestionar solicitudes de seguimiento\n")
+
+            if opcionGI == "1":
+                username_seguidor = input("Ingresa tu nombre de usuario: ")
+                usuario_seguidor = Usuario.buscar_por_username(username_seguidor, usuarios)
+                
+                username_a_seguir = input("Ingresa el nombre de usuario a seguir: ")
+                usuario_a_seguir = Usuario.buscar_por_username(username_a_seguir, usuarios)
+
+                if usuario_seguidor and usuario_a_seguir:
+                    usuario_seguidor.seguir_usuario(usuario_a_seguir)
+                else:
+                    print("Usuario no encontrado.")
+
+            elif opcionGI == "2":
+                username_seguidor = input("Ingresa tu nombre de usuario: ")
+                usuario_seguidor = Usuario.buscar_por_username(username_seguidor, usuarios)
+                
+                username_a_dejar_de_seguir = input("Ingresa el nombre de usuario a dejar de seguir: ")
+                usuario_a_dejar_de_seguir = Usuario.buscar_por_username(username_a_dejar_de_seguir, usuarios)
+
+                if usuario_seguidor and usuario_a_dejar_de_seguir:
+                    usuario_seguidor.dejar_de_seguir_usuario(usuario_a_dejar_de_seguir)
+                else:
+                    print("Usuario no encontrado.")
+
+            elif opcionGI == "3":
+                username_comentador = input("Ingresa tu nombre de usuario: ")
+                usuario_comentador = Usuario.buscar_por_username(username_comentador, usuarios)
+
+                if usuario_comentador:
+                    # Mostrar una lista de usuarios a los que sigue y puede comentar
+                    usuarios_a_comentar = [usuario for usuario in usuarios if usuario.identification != usuario_comentador.identification and usuario.identification in usuario_comentador.following]
+                    if not usuarios_a_comentar:
+                        print("No sigues a nadie a quien puedas comentar.")
+                    else:
+                        print("Usuarios a los que sigues y puedes comentar:")
+                        for i, otro_usuario in enumerate(usuarios_a_comentar):
+                            print(f"{i + 1}. {otro_usuario.username}")
+
+                        opcion_usuario = input("Ingresa el número del usuario al que quieres comentar: ")
+                        if opcion_usuario.isdigit():
+                            opcion_usuario = int(opcion_usuario) - 1
+                            if 0 <= opcion_usuario < len(usuarios_a_comentar):
+                                usuario_a_comentar = usuarios_a_comentar[opcion_usuario]
+
+                                # Mostrar las publicaciones del usuario a comentar
+                                print(f"Publicaciones de {usuario_a_comentar.username}:")
+                                for i, publicacion in enumerate(usuario_a_comentar.publicaciones):
+                                    print(f"{i + 1}: {publicacion.descripcion}")
+
+                                opcion_publicacion = input("Ingresa el número de la publicación a comentar: ")
+                                if opcion_publicacion.isdigit():
+                                    opcion_publicacion = int(opcion_publicacion) - 1
+                                    if 0 <= opcion_publicacion < len(usuario_a_comentar.publicaciones):
+                                        publicacion_a_comentar = usuario_a_comentar.publicaciones[opcion_publicacion]
+                                        texto_comentario = input("Ingresa el comentario: ")
+                                        usuario_comentador.comentar_publicacion(publicacion_a_comentar, texto_comentario)
+                                    else:
+                                        print("Opción de publicación no válida.")
+                                else:
+                                    print("Opción de publicación no válida.")
+                            else:
+                                print("Opción de usuario no válida.")
+                        else:
+                            print("Opción de usuario no válida.")
+                else:
+                    print("Usuario comentador no encontrado.")
+
+            elif opcionGI == "4":
+                username_liker = input("Ingresa tu nombre de usuario: ")
+                usuario_liker = Usuario.buscar_por_username(username_liker, usuarios)
+
+                if usuario_liker:
+                    # Mostrar una lista de usuarios a los que sigue y puede dar "like"
+                    usuarios_a_dar_like = [usuario for usuario in usuarios if usuario.identification != usuario_liker.identification and usuario.identification in usuario_liker.following]
+                    if not usuarios_a_dar_like:
+                        print("No sigues a nadie a cuyas publicaciones puedas dar 'like'.")
+                    else:
+                        print("Usuarios a los que sigues y cuyas publicaciones puedes dar 'like':")
+                        for i, otro_usuario in enumerate(usuarios_a_dar_like):
+                            print(f"{i + 1}. {otro_usuario.username}")
+
+                        opcion_usuario = input("Ingresa el número del usuario cuya publicación quieres dar 'like': ")
+                        if opcion_usuario.isdigit():
+                            opcion_usuario = int(opcion_usuario) - 1
+                            if 0 <= opcion_usuario < len(usuarios_a_dar_like):
+                                usuario_a_dar_like = usuarios_a_dar_like[opcion_usuario]
+
+                                # Mostrar las publicaciones del usuario a dar "like"
+                                print(f"Publicaciones de {usuario_a_dar_like.username}:")
+                                for i, publicacion in enumerate(usuario_a_dar_like.publicaciones):
+                                    print(f"{i + 1}: {publicacion.descripcion}")
+
+                                opcion_publicacion = input("Ingresa el número de la publicación a la que quieres dar 'like': ")
+                                if opcion_publicacion.isdigit():
+                                    opcion_publicacion = int(opcion_publicacion) - 1
+                                    if 0 <= opcion_publicacion < len(usuario_a_dar_like.publicaciones):
+                                        publicacion_a_dar_like = usuario_a_dar_like.publicaciones[opcion_publicacion]
+                                        usuario_liker.dar_like(publicacion_a_dar_like)
+                                        print("Has dado 'like' a la publicación exitosamente.")
+                                    else:
+                                        print("Opción de publicación no válida.")
+                                else:
+                                    print("Opción de publicación no válida.")
+                            else:
+                                print("Opción de usuario no válida.")
+                        else:
+                            print("Opción de usuario no válida.")
+                else:
+                    print("Usuario que da 'like' no encontrado.")
+
+
+            elif opcionGI == "5":
+                username_dueno_post = input("Ingresa tu nombre de usuario: ")
+                usuario_dueno_post = Usuario.buscar_por_username(username_dueno_post, usuarios)
+
+                if usuario_dueno_post:
+                    print(f"Publicaciones de {usuario_dueno_post.username}:")
+                    for i, publicacion in enumerate(usuario_dueno_post.publicaciones):
+                        print(f"{i + 1}: {publicacion.descripcion}")
+
+                    opcion_publicacion = input("Ingresa el número de la publicación en la que quieres eliminar un comentario: ")
+                    if opcion_publicacion.isdigit():
+                        opcion_publicacion = int(opcion_publicacion) - 1
+                        if 0 <= opcion_publicacion < len(usuario_dueno_post.publicaciones):
+                            publicacion_a_eliminar_comentario = usuario_dueno_post.publicaciones[opcion_publicacion]
+
+                            # Mostrar los comentarios en la publicación con comentarios a eliminar
+                            if publicacion_a_eliminar_comentario.comentarios:
+                                print("Comentarios en la publicación:")
+                                for i, comentario in enumerate(publicacion_a_eliminar_comentario.comentarios):
+                                    print(f"{i + 1}: {comentario}")
+
+                                opcion_comentario = input("Ingresa el número del comentario que deseas eliminar (o '0' para cancelar): ")
+                                if opcion_comentario.isdigit():
+                                    opcion_comentario = int(opcion_comentario) - 1
+                                    if 0 <= opcion_comentario < len(publicacion_a_eliminar_comentario.comentarios):
+                                        comentario_a_eliminar = publicacion_a_eliminar_comentario.comentarios[opcion_comentario]
+                                        print(f"Comentario seleccionado: {comentario_a_eliminar}")
+                                        
+                                        confirmacion = input("¿Seguro que deseas eliminar este comentario? (s/n): ")
+                                        if confirmacion.lower() == "s":
+                                            usuario_dueno_post.eliminar_comentario(publicacion_a_eliminar_comentario, comentario_a_eliminar)
+                                            print("Comentario eliminado exitosamente.")
+                                        else:
+                                            print("Eliminación de comentario cancelada.")
+                                    else:
+                                        print("Opción de comentario no válida.")
+                                elif opcion_comentario == "0":
+                                    print("Cancelaste la eliminación de comentario.")
+                                else:
+                                    print("Opción de comentario no válida.")
+                            else:
+                                print("La publicación no tiene comentarios.")
+                        else:
+                            print("Opción de publicación no válida.")
+                    else:
+                        print("Opción de publicación no válida.")
+                else:
+                    print("Usuario dueño del post no encontrado.")
+
+
+            elif opcionGI == "6":
+            # Acceder al perfil de otro usuario desde comentarios
+                publicacion_id = input("Ingrese el ID de la publicación: ")
+                publicacion_a_ver = None
+                for publicacion in publicaciones:
+                    if publicacion.identification == publicacion_id:
+                        publicacion_a_ver = publicacion
+                        break
+
+                if publicacion_a_ver:
+                    # Ver comentarios y acceder a perfiles desde los comentarios
+                    publicacion_a_ver.ver_comentarios(usuarios)
+                else:
+                    print("Publicación no encontrada.")
+            elif opcionGI == "7":
+             # Después de que un usuario inicie sesión con éxito, asigna el usuario actual
+                usuario_actual = Usuario.obtener_usuario_actual(usuarios)
+                usuario_actual.gestionar_solicitudes_seguimiento(usuarios)
         elif opcion == "4":
             pass
         elif opcion == "5":

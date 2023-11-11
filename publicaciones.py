@@ -30,12 +30,14 @@ class Publicacion:
         else:
             print(f"{usuario_A.username} no sigue a {usuario_B.username}.")
         
-        def eliminar_comentario(self, comentario):
-            if comentario in self.comentarios:
-                if comentario.autor == self.usuario:
-                    self.comentarios.remove(comentario)
-                    print("Comentario eliminado.")
-                else:
-                    print("No tienes permiso para eliminar este comentario.")
+    def eliminar_comentario(self, comentario, usuario_que_elimina):
+        if comentario in self.comentarios:
+            if usuario_que_elimina.identification == self.usuario:
+                self.comentarios.remove(comentario)
+                print("Comentario eliminado.")
             else:
-                print("Comentario no encontrado en esta publicación.")
+                print("No tienes permiso para eliminar este comentario.")
+        else:
+            print("Comentario no encontrado en esta publicación.")
+
+    

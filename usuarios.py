@@ -12,6 +12,7 @@ class Usuario:
         self.departament = departament
         self.following = following
         self.publicaciones = [] 
+        self.solicitudes_pendientes = []
 
     def registrar_profesor(self, identification, firstname, lastname, email, username, department):
         nuevo_profesor = Profesor(identification, firstname, lastname, email, username, "profesor", department, [])
@@ -117,32 +118,75 @@ class Usuario:
         else:
             print(f"No puedes ver las publicaciones de {usuario_a_seguir.username} porque no lo sigues.")
     
-    def aprobar_seguidor(self, solicitante):
-        if self.carrera == solicitante.carrera:
-            # Si estudian la misma carrera, el seguimiento se aprueba automáticamente
-            return True
-        else:
-            # Aquí podrías implementar una lógica más avanzada, como notificar al usuario
-            # propietario de la cuenta para que apruebe o rechace la solicitud.
-            # Por simplicidad, aquí simplemente preguntamos al usuario si desea aprobar.
-            respuesta = input(f"{solicitante.nombre} solicita seguirte. ¿Aprobar la solicitud? (Sí/No): ")
-            if respuesta.lower() == "si":
-                return True
-            else:
-                return False
-    
     def seguir_usuario(self, otro_usuario):
-        if self.carrera == otro_usuario.carrera:
-            # Si estudian la misma carrera, el follow es automático
-            self.seguidos.append(otro_usuario)
-            print(f"Ahora sigues a {otro_usuario.nombre}.")
-        else:
-            # Necesita aprobación si no estudian la misma carrera
-            if otro_usuario.aprobar_seguidor(self):
-                self.seguidos.append(otro_usuario)
-                print(f"Ahora sigues a {otro_usuario.nombre}.")
+        if isinstance(self, Estudiante) and isinstance(otro_usuario, Estudiante):
+            if self.major == otro_usuario.major:
+                # Si estudian la misma carrera, el follow es automático
+                self.following.append(otro_usuario.identification)
+                print(f"Ahora sigues a {otro_usuario.username}.")
             else:
-                print(f"{otro_usuario.nombre} rechazó tu solicitud para seguirlo.")
+                # Solicitar seguimiento
+                self.enviar_solicitud_seguimiento(otro_usuario)
+                print(f"Solicitud de seguimiento enviada a {otro_usuario.username}. Esperando aprobación.")
+        else:
+            print("Solo los estudiantes pueden seguir a otros estudiantes.")
+
+    def gestionar_solicitudes_seguimiento(self, usuarios):
+        if self.solicitudes_pendientes:
+            print("Solicitudes de seguimiento pendientes:")
+            for i, solicitud in enumerate(self.solicitudes_pendientes):
+                print(f"{i + 1}. {solicitud.username}")
+
+            opcion = input("¿Deseas aceptar alguna solicitud? (Ingrese el número o '0' para cancelar): ")
+            if opcion.isdigit():
+                opcion = int(opcion)
+                if 0 < opcion <= len(self.solicitudes_pendientes):
+                    estudiante_solicitante = self.solicitudes_pendientes[opcion - 1]
+                    accion = input(f"¿Deseas aceptar (A) o rechazar (R) la solicitud de {estudiante_solicitante.username}? (A/R): ")
+                    if accion.lower() == "a":
+                        self.seguir_usuario(estudiante_solicitante)
+                        self.solicitudes_pendientes.remove(estudiante_solicitante)
+                        print(f"Aceptaste la solicitud de seguimiento de {estudiante_solicitante.username}.")
+                    elif accion.lower() == "r":
+                        self.solicitudes_pendientes.remove(estudiante_solicitante)
+                        print(f"Rechazaste la solicitud de seguimiento de {estudiante_solicitante.username}.")
+                    else:
+                        print("Opción no válida.")
+                elif opcion == 0:
+                    print("Cancelaste la gestión de solicitudes.")
+                else:
+                    print("Opción no válida.")
+        else:
+            print("No tienes solicitudes de seguimiento pendientes.")
+
+    def dejar_de_seguir_usuario(self, otro_usuario):
+        if otro_usuario.identification in self.following:
+            self.following.remove(otro_usuario.identification)
+            print(f"Has dejado de seguir a {otro_usuario.username}.")
+        else:
+            print(f"No estabas siguiendo a {otro_usuario.username}.")
+
+    def comentar_publicacion(self, publicacion, texto):
+        nuevo_comentario = Comentario(self, publicacion, texto)
+        publicacion.agregar_comentario(nuevo_comentario)
+        print("Comentario agregado exitosamente.")
+
+    def dar_like(self, publicacion):
+        if self.identification not in publicacion.likes:
+            # Si el usuario no había dado like, dar like
+            publicacion.dar_like(self.identification)
+            print("Le diste like a la publicación.")
+        else:
+            # Si ya había dado like, quitarlo
+            publicacion.quitar_like(self.identification)
+            print("Le diste dislike a la publicación.")
+
+    def eliminar_comentario(self, publicacion, comentario):
+        if comentario in publicacion.comentarios:
+            publicacion.comentarios.remove(comentario)
+            print("Comentario eliminado exitosamente.")
+        else:
+            print("Comentario no encontrado o no tienes permisos para eliminarlo.")
         
     def comentar_publicacion(self, publicacion, texto):
         nuevo_comentario = Comentario(self, publicacion, texto)
@@ -171,5 +215,8 @@ class Estudiante(Usuario):
     def __init__(self, id, firstName, lastName, email, username, major, following):
         super().__init__(id, firstName, lastName, email, username, "estudiante", major, following)
         self.major = major
+        self.solicitudes_seguimiento = []
 
+    def enviar_solicitud_seguimiento(self, otro_usuario):
+        otro_usuario.solicitudes_pendientes.append(self)
 
