@@ -207,36 +207,100 @@ class Usuario:
     def enviar_solicitud_seguimiento(self, otro_usuario):
         otro_usuario.solicitudes_pendientes.append(self)    
 
-    def eliminar_post_ofensivo(self, publicacion):
+    def eliminar_post_ofensivo(self, publicaciones):
         if self.es_admin:
-            if publicacion in self.publicaciones:
-                self.publicaciones.remove(publicacion)
-                print("Post eliminado por contenido ofensivo.")
-            else:
-                print("El usuario no tiene esta publicación.")
-        else:
-            print("No tienes permisos para realizar esta acción.")
+            if not publicaciones:
+                print("No hay publicaciones para mostrar.")
+                return
 
-    def eliminar_comentario_ofensivo(self, publicacion, comentario):
-        if self.es_admin:
-            if publicacion in self.publicaciones:
-                if comentario in publicacion.comentarios:
-                    publicacion.comentarios.remove(comentario)
-                    print("Comentario eliminado por contenido ofensivo.")
+            print("Publicaciones:")
+            for i, publicacion in enumerate(publicaciones, 1):
+                print(f"{i}. Descripción: {publicacion.descripcion}")
+                print(f"   Fecha: {publicacion.fecha}")
+                print("=" * 40)
+
+            opcion_eliminar = input("Ingresa el número de la publicación que quieres eliminar (o '0' para cancelar): ")
+            if opcion_eliminar.isdigit():
+                opcion_eliminar = int(opcion_eliminar)
+                if 0 < opcion_eliminar <= len(publicaciones):
+                    publicacion_a_eliminar = publicaciones[opcion_eliminar - 1]
+                    self.publicaciones.remove(publicacion_a_eliminar)
+                    print("Post eliminado exitosamente.")
+                elif opcion_eliminar == 0:
+                    print("Cancelaste la eliminación de post.")
                 else:
-                    print("El comentario no pertenece a esta publicación.")
+                    print("Número de publicación no válido.")
             else:
-                print("El usuario no tiene esta publicación.")
+                print("Entrada no válida. Debes ingresar un número.")
         else:
             print("No tienes permisos para realizar esta acción.")
 
-    def eliminar_usuario_infractor(self, usuario_a_eliminar):
+    def eliminar_comentario_ofensivo(self, publicaciones):
         if self.es_admin:
-            if usuario_a_eliminar in self.usuarios:
-                self.usuarios.remove(usuario_a_eliminar)
-                print(f"Usuario {usuario_a_eliminar.username} eliminado por infracciones múltiples.")
+            if not publicaciones:
+                print("No hay publicaciones para mostrar.")
+                return
+
+            print("Publicaciones:")
+            for i, publicacion in enumerate(publicaciones, 1):
+                print(f"{i}. Descripción: {publicacion.descripcion}")
+                print(f"   Fecha: {publicacion.fecha}")
+                print("   Comentarios:")
+                for j, comentario in enumerate(publicacion.comentarios, 1):
+                    print(f"      {j}. {comentario}")
+                print("=" * 40)
+
+            opcion_publicacion = input("Ingresa el número de la publicación que contiene el comentario a eliminar (o '0' para cancelar): ")
+            if opcion_publicacion.isdigit():
+                opcion_publicacion = int(opcion_publicacion)
+                if 0 < opcion_publicacion <= len(publicaciones):
+                    publicacion_a_eliminar_comentario = publicaciones[opcion_publicacion - 1]
+
+                    opcion_comentario = input("Ingresa el número del comentario que quieres eliminar (o '0' para cancelar): ")
+                    if opcion_comentario.isdigit():
+                        opcion_comentario = int(opcion_comentario)
+                        if 0 < opcion_comentario <= len(publicacion_a_eliminar_comentario.comentarios):
+                            comentario_a_eliminar = publicacion_a_eliminar_comentario.comentarios[opcion_comentario - 1]
+                            publicacion_a_eliminar_comentario.comentarios.remove(comentario_a_eliminar)
+                            print("Comentario eliminado exitosamente.")
+                        elif opcion_comentario == 0:
+                            print("Cancelaste la eliminación de comentario.")
+                        else:
+                            print("Número de comentario no válido.")
+                    else:
+                        print("Entrada no válida. Debes ingresar un número.")
+                elif opcion_publicacion == 0:
+                    print("Cancelaste la eliminación de comentario.")
+                else:
+                    print("Número de publicación no válido.")
             else:
-                print("El usuario a eliminar no está en la lista de usuarios.")
+                print("Entrada no válida. Debes ingresar un número.")
+        else:
+            print("No tienes permisos para realizar esta acción.")
+
+    def eliminar_usuario_infractor(self, usuarios):
+        if self.es_admin:
+            if not usuarios:
+                print("No hay usuarios para mostrar.")
+                return
+
+            print("Usuarios:")
+            for i, usuario in enumerate(usuarios, 1):
+                print(f"{i}. Username: {usuario.username}")
+
+            opcion_usuario = input("Ingresa el número del usuario a eliminar (o '0' para cancelar): ")
+            if opcion_usuario.isdigit():
+                opcion_usuario = int(opcion_usuario)
+                if 0 < opcion_usuario <= len(usuarios):
+                    usuario_a_eliminar = usuarios[opcion_usuario - 1]
+                    usuarios.remove(usuario_a_eliminar)
+                    print(f"Usuario {usuario_a_eliminar.username} eliminado por infracciones múltiples.")
+                elif opcion_usuario == 0:
+                    print("Cancelaste la eliminación de usuario.")
+                else:
+                    print("Número de usuario no válido.")
+            else:
+                print("Entrada no válida. Debes ingresar un número.")
         else:
             print("No tienes permisos para realizar esta acción.")
 
