@@ -13,6 +13,7 @@ class Usuario:
         self.following = following
         self.publicaciones = [] 
         self.solicitudes_pendientes = []
+        self.es_admin = False
 
     def registrar_profesor(self, identification, firstname, lastname, email, username, department):
         nuevo_profesor = Profesor(identification, firstname, lastname, email, username, "profesor", department, [])
@@ -201,8 +202,44 @@ class Usuario:
         else:
             publicacion.likes.append(self)
             print("Le diste like a la publicación.")
-    
-        
+    def hacer_admin(self):
+        self.es_admin = True
+    def enviar_solicitud_seguimiento(self, otro_usuario):
+        otro_usuario.solicitudes_pendientes.append(self)    
+
+    def eliminar_post_ofensivo(self, publicacion):
+        if self.es_admin:
+            if publicacion in self.publicaciones:
+                self.publicaciones.remove(publicacion)
+                print("Post eliminado por contenido ofensivo.")
+            else:
+                print("El usuario no tiene esta publicación.")
+        else:
+            print("No tienes permisos para realizar esta acción.")
+
+    def eliminar_comentario_ofensivo(self, publicacion, comentario):
+        if self.es_admin:
+            if publicacion in self.publicaciones:
+                if comentario in publicacion.comentarios:
+                    publicacion.comentarios.remove(comentario)
+                    print("Comentario eliminado por contenido ofensivo.")
+                else:
+                    print("El comentario no pertenece a esta publicación.")
+            else:
+                print("El usuario no tiene esta publicación.")
+        else:
+            print("No tienes permisos para realizar esta acción.")
+
+    def eliminar_usuario_infractor(self, usuario_a_eliminar):
+        if self.es_admin:
+            if usuario_a_eliminar in self.usuarios:
+                self.usuarios.remove(usuario_a_eliminar)
+                print(f"Usuario {usuario_a_eliminar.username} eliminado por infracciones múltiples.")
+            else:
+                print("El usuario a eliminar no está en la lista de usuarios.")
+        else:
+            print("No tienes permisos para realizar esta acción.")
+
 
 # Clase para representar un Profesor
 class Profesor(Usuario):
@@ -217,6 +254,5 @@ class Estudiante(Usuario):
         self.major = major
         self.solicitudes_seguimiento = []
 
-    def enviar_solicitud_seguimiento(self, otro_usuario):
-        otro_usuario.solicitudes_pendientes.append(self)
+    
 

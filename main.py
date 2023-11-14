@@ -2,8 +2,12 @@ import uuid
 import requests
 from usuarios import Usuario,Estudiante,Profesor
 from publicaciones import Publicacion
-#Intancias de las clases
-
+from estadisticas import Estadisticas
+#funcion para imprimir las estadisticas
+def imprimir_estadistica(titulo, datos):
+    print(titulo)
+    for dato in datos:
+        print(f"{dato.username}: {dato.informacion_estadistica()}")
 #Funcion para cargar datos
 def carga_datos_usuarios() ->list:
     #Cargando datos de la API con requests
@@ -345,6 +349,39 @@ def menu():
         elif opcion == "4":
             pass
         elif opcion == "5":
+            # Estadísticas
+            print("Indicadores de gestión (Estadísticas)")
+            opcion_estadisticas = input("1. Usuarios con más publicaciones\n2. Carreras con más publicaciones\n3. Post con más interacciones\n4. Usuarios con más interacciones\n5. Usuarios con más post tumbados\n6. Carreras con más comentarios inadecuados\n7. Usuarios eliminados por infracciones\n")
+            
+            if opcion_estadisticas == "1":
+                top_usuarios_publicaciones = Estadisticas.usuarios_con_mas_publicaciones(usuarios)
+                imprimir_estadistica("Usuarios con más publicaciones", top_usuarios_publicaciones)
+                
+            elif opcion_estadisticas == "2":
+                top_carreras_publicaciones = Estadisticas.carreras_con_mas_publicaciones(usuarios)
+                imprimir_estadistica("Carreras con más publicaciones", top_carreras_publicaciones)
+                
+            elif opcion_estadisticas == "3":
+                top_post_interacciones = Estadisticas.post_con_mas_interacciones(publicaciones)
+                imprimir_estadistica("Post con más interacciones", top_post_interacciones)
+                
+            elif opcion_estadisticas == "4":
+                top_usuarios_interacciones = Estadisticas.usuarios_con_mas_interacciones(usuarios)
+                imprimir_estadistica("Usuarios con más interacciones", top_usuarios_interacciones)
+                
+            elif opcion_estadisticas == "5":
+                top_usuarios_tumbados = Estadisticas.usuarios_con_mas_post_tumbados(usuarios)
+                imprimir_estadistica("Usuarios con más post tumbados", top_usuarios_tumbados)
+                
+            elif opcion_estadisticas == "6":
+                top_carreras_comentarios_inadecuados = Estadisticas.carreras_con_mas_comentarios_inadecuados(usuarios)
+                imprimir_estadistica("Carreras con más comentarios inadecuados", top_carreras_comentarios_inadecuados)
+                
+            elif opcion_estadisticas == "7":
+                usuarios_eliminados = []  # Lista de usuarios eliminados
+                top_usuarios_eliminados = Estadisticas.usuarios_eliminados_por_infracciones(usuarios_eliminados)
+                imprimir_estadistica("Usuarios eliminados por infracciones", top_usuarios_eliminados)
+        elif opcion == "6":
             break
 if __name__ == "__main__":
     menu()
