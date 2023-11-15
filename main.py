@@ -8,37 +8,36 @@ def imprimir_estadistica(titulo, datos):
     print(titulo)
     for dato in datos:
         print(f"{dato.username}: {dato.informacion_estadistica()}")
-#Funcion para cargar datos
-def carga_datos_usuarios() ->list:
-    #Cargando datos de la API con requests
+#Funcion para cargar datos refactorizada
+def cargar_datos() -> tuple:
     api_usuarios = "https://raw.githubusercontent.com/Algoritmos-y-Programacion-2223-3/api-proyecto/08d4d2ce028692d71e9f8c32ea8c29ae24efe5b1/users.json"
-    response_usuarios = requests.get(api_usuarios)
-    datos_usuarios = response_usuarios.json()
+    api_post = "https://raw.githubusercontent.com/Algoritmos-y-Programacion-2223-3/api-proyecto/main/posts.json"
 
-    #lista para almacenar datos de los usuarios
+    response_usuarios = requests.get(api_usuarios)
+    response_post = requests.get(api_post)
+
+    datos_usuarios = response_usuarios.json()
+    datos_post = response_post.json()
+
     usuarios = []
+    publicaciones = []
+
     for data in datos_usuarios:
         if data['type'] == 'professor':
             usuario = Profesor(data['id'], data['firstName'], data['lastName'], data['email'], data['username'], data['department'], data['following'])
         elif data['type'] == 'student':
             usuario = Estudiante(data['id'], data['firstName'], data['lastName'], data['email'], data['username'], data['major'], data['following'])
         usuarios.append(usuario)
-    return usuarios
-def cargar_datos_publicaciones():
-    api_Post = "https://raw.githubusercontent.com/Algoritmos-y-Programacion-2223-3/api-proyecto/main/posts.json"
-    response_Post = requests.get(api_Post)
-    datos_post = response_Post.json()
-    publicaciones = []
 
     for datos in datos_post:
-        publicacion = Publicacion(datos['publisher'],datos['type'],datos['caption'],datos['tags'],datos['date'],datos['multimedia'])
+        publicacion = Publicacion(datos['publisher'], datos['type'], datos['caption'], datos['tags'], datos['date'], datos['multimedia'])
         publicaciones.append(publicacion)
-    return publicaciones
+
+    return usuarios, publicaciones
 
 #Menu principal de la app
 def menu():
-    usuarios = carga_datos_usuarios()
-    publicaciones = cargar_datos_publicaciones()
+    usuarios,publicaciones = cargar_datos()
     for publicacion in publicaciones:
         for usuario in usuarios:
             if publicacion.usuario == usuario.identification:

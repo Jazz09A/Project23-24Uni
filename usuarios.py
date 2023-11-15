@@ -29,19 +29,18 @@ class Usuario:
                 return usuario
         return None  # Retorna None si el usuario no se encuentra
    
-    def buscar_por_departamento_o_carrera(self,tipo,datos):
+    def buscar_por_departamento_o_carrera(self, tipo, datos):
         perfiles_encontrados = []
+        
         if tipo == "1":
-            departamento = input("Ingrese el departamento: ")
-            for usuario in datos:
-                if usuario.departament == departamento:
-                    perfiles_encontrados.append(usuario)
+            criterio = input("Ingrese el departamento: ")
+            perfiles_encontrados = [usuario for usuario in datos if usuario.departament == criterio]
         elif tipo == "2":
-            carrera = input("Ingrese la carrera: ")
-            for usuario in datos:
-                if usuario.major == carrera:
-                    perfiles_encontrados.append(usuario)
+            criterio = input("Ingrese la carrera: ")
+            perfiles_encontrados = [usuario for usuario in datos if usuario.major == criterio]
+
         return perfiles_encontrados
+
     
     def actualizar_informacion(self, firstname, lastname, email, new_username, departament, major):
         self.firstname = firstname
@@ -53,23 +52,26 @@ class Usuario:
     
 
     @staticmethod
-    def eliminar_cuenta(username,usuarios):
-        for usuario in usuarios:
-            if username == usuario.username:
-                usuarios.remove(usuario)
-                print("Cuenta eliminada exitosamente.")
-                return  
-        print("Perfil no encontrado.")
+    def eliminar_cuenta(username, usuarios):
+        usuario_encontrado = next((usuario for usuario in usuarios if username == usuario.username), None)
+        if usuario_encontrado:
+            usuarios.remove(usuario_encontrado)
+            print("Cuenta eliminada exitosamente.")
+        else:
+            print("Perfil no encontrado.")
 
-    def mostrar_perfil(self,username,usuarios,publicaciones):
-        usuario = self.buscar_por_username(username,usuarios)
-        publicaciones_encontradas = []
-        for publicacion in publicaciones:
-            if publicacion.publicacion == usuario.identification:
-                publicaciones_encontradas.append(publicacion)
+    def mostrar_perfil(self, username, usuarios, publicaciones):
+        usuario = self.buscar_por_username(username, usuarios)
+        if usuario:
+            publicaciones_encontradas = [publicacion for publicacion in publicaciones if publicacion.usuario == usuario.identification]
+            if publicaciones_encontradas:
+                return publicaciones_encontradas
             else:
-                print("No hay publicaciones encontradas")
-        return publicaciones_encontradas
+                print("No hay publicaciones encontradas para este usuario.")
+        else:
+            print("Usuario no encontrado.")
+            return []
+
         
     def subir_publicacion(self, tipo, descripcion, hashtags):
         nueva_publicacion = Publicacion(self.identification, tipo, descripcion, hashtags, datetime.datetime.now(),multimedia={})
@@ -78,29 +80,34 @@ class Usuario:
     @staticmethod
     def obtener_usuario_actual(usuarios):
         username = input("Ingresa tu nombre de usuario: ")
-        
+
         for usuario in usuarios:
             if usuario.username == username:
                 return usuario
 
         print("Usuario no encontrado. Por favor, verifica tu nombre de usuario.")
         return None
+
+    #Funcion de busqueda de publicaciones refactorizada, es una funcion para las 2
     @staticmethod
-    def buscar_publicaciones_por_usuario(usuarios, username):
-        publicaciones_usuario = []
-        for usuario in usuarios:
-            if usuario.username == username:
-                publicaciones_usuario.extend(usuario.publicaciones)
-        return publicaciones_usuario
+    def buscar_publicaciones_por_criterio(datos, criterio, valor):
+        publicaciones_encontradas = []
+        for dato in datos:
+            if criterio(dato, valor):
+                if isinstance(dato, Usuario):
+                    publicaciones_encontradas.extend(dato.publicaciones)
+                elif isinstance(dato, Publicacion):
+                    publicaciones_encontradas.append(dato)
+        return publicaciones_encontradas
 
     @staticmethod
-    def buscar_publicaciones_por_hashtags(publicaciones, hashtag):
-        publicaciones_hashtags = []
-        for publicacion in publicaciones:
-            if hashtag in publicacion.tags:
-                publicaciones_hashtags.append(publicacion)
-        return publicaciones_hashtags
-    
+    def por_usuario(usuario, username):
+        return usuario.username == username
+
+    @staticmethod
+    def por_hashtags(publicacion, hashtag):
+        return hashtag in publicacion.tags
+        
     def ver_publicaciones(self, usuario_a_seguir):
         # Verificar si el usuario actual sigue al usuario a seguir
         if usuario_a_seguir.identification in self.following:
@@ -133,32 +140,37 @@ class Usuario:
             print("Solo los estudiantes pueden seguir a otros estudiantes.")
 
     def gestionar_solicitudes_seguimiento(self, usuarios):
-        if self.solicitudes_pendientes:
-            print("Solicitudes de seguimiento pendientes:")
-            for i, solicitud in enumerate(self.solicitudes_pendientes):
-                print(f"{i + 1}. {solicitud.username}")
-
-            opcion = input("¿Deseas aceptar alguna solicitud? (Ingrese el número o '0' para cancelar): ")
-            if opcion.isdigit():
-                opcion = int(opcion)
-                if 0 < opcion <= len(self.solicitudes_pendientes):
-                    estudiante_solicitante = self.solicitudes_pendientes[opcion - 1]
-                    accion = input(f"¿Deseas aceptar (A) o rechazar (R) la solicitud de {estudiante_solicitante.username}? (A/R): ")
-                    if accion.lower() == "a":
-                        self.seguir_usuario(estudiante_solicitante)
-                        self.solicitudes_pendientes.remove(estudiante_solicitante)
-                        print(f"Aceptaste la solicitud de seguimiento de {estudiante_solicitante.username}.")
-                    elif accion.lower() == "r":
-                        self.solicitudes_pendientes.remove(estudiante_solicitante)
-                        print(f"Rechazaste la solicitud de seguimiento de {estudiante_solicitante.username}.")
-                    else:
-                        print("Opción no válida.")
-                elif opcion == 0:
-                    print("Cancelaste la gestión de solicitudes.")
-                else:
-                    print("Opción no válida.")
-        else:
+        if not self.solicitudes_pendientes:
             print("No tienes solicitudes de seguimiento pendientes.")
+            return
+
+        print("Solicitudes de seguimiento pendientes:")
+        for i, solicitud in enumerate(self.solicitudes_pendientes, 1):
+            print(f"{i}. {solicitud.username}")
+
+        try:
+            opcion = int(input("¿Deseas aceptar alguna solicitud? (Ingrese el número o '0' para cancelar): "))
+            if opcion == 0:
+                print("Cancelaste la gestión de solicitudes.")
+                return
+            elif 0 < opcion <= len(self.solicitudes_pendientes):
+                estudiante_solicitante = self.solicitudes_pendientes[opcion - 1]
+                accion = input(f"¿Deseas aceptar (A) o rechazar (R) la solicitud de {estudiante_solicitante.username}? (A/R): ").lower()
+                
+                if accion == "a":
+                    self.seguir_usuario(estudiante_solicitante)
+                    self.solicitudes_pendientes.remove(estudiante_solicitante)
+                    print(f"Aceptaste la solicitud de seguimiento de {estudiante_solicitante.username}.")
+                elif accion == "r":
+                    self.solicitudes_pendientes.remove(estudiante_solicitante)
+                    print(f"Rechazaste la solicitud de seguimiento de {estudiante_solicitante.username}.")
+                else:
+                    print("Opción no válida. Selecciona 'A' para aceptar o 'R' para rechazar.")
+            else:
+                print("Opción no válida. Ingresa un número correspondiente a una solicitud.")
+        except ValueError:
+            print("Entrada no válida. Debes ingresar un número.")
+
 
     def dejar_de_seguir_usuario(self, otro_usuario):
         if otro_usuario.identification in self.following:
@@ -207,102 +219,125 @@ class Usuario:
     def enviar_solicitud_seguimiento(self, otro_usuario):
         otro_usuario.solicitudes_pendientes.append(self)    
 
+    #Funcion refactorizada
     def eliminar_post_ofensivo(self, publicaciones):
-        if self.es_admin:
-            if not publicaciones:
-                print("No hay publicaciones para mostrar.")
-                return
+        if not self.es_admin:
+            print("No tienes permisos para realizar esta acción.")
+            return
 
-            print("Publicaciones:")
-            for i, publicacion in enumerate(publicaciones, 1):
-                print(f"{i}. Descripción: {publicacion.descripcion}")
-                print(f"   Fecha: {publicacion.fecha}")
-                print("=" * 40)
+        if not publicaciones:
+            print("No hay publicaciones para mostrar.")
+            return
 
+        print("Publicaciones:")
+        for i, publicacion in enumerate(publicaciones, 1):
+            print(f"{i}. Descripción: {publicacion.descripcion}")
+            print(f"   Fecha: {publicacion.fecha}")
+            print("=" * 40)
+
+        while True:
             opcion_eliminar = input("Ingresa el número de la publicación que quieres eliminar (o '0' para cancelar): ")
-            if opcion_eliminar.isdigit():
+            
+            try:
                 opcion_eliminar = int(opcion_eliminar)
                 if 0 < opcion_eliminar <= len(publicaciones):
                     publicacion_a_eliminar = publicaciones[opcion_eliminar - 1]
                     self.publicaciones.remove(publicacion_a_eliminar)
                     print("Post eliminado exitosamente.")
+                    break
                 elif opcion_eliminar == 0:
                     print("Cancelaste la eliminación de post.")
+                    break
                 else:
                     print("Número de publicación no válido.")
-            else:
-                print("Entrada no válida. Debes ingresar un número.")
-        else:
-            print("No tienes permisos para realizar esta acción.")
+            except ValueError:
+                print("Entrada no válida. Debes ingresar un número entero.")
 
+    #Funcion refactorizada
     def eliminar_comentario_ofensivo(self, publicaciones):
-        if self.es_admin:
-            if not publicaciones:
-                print("No hay publicaciones para mostrar.")
-                return
+        if not self.es_admin:
+            print("No tienes permisos para realizar esta acción.")
+            return
 
-            print("Publicaciones:")
-            for i, publicacion in enumerate(publicaciones, 1):
-                print(f"{i}. Descripción: {publicacion.descripcion}")
-                print(f"   Fecha: {publicacion.fecha}")
-                print("   Comentarios:")
-                for j, comentario in enumerate(publicacion.comentarios, 1):
-                    print(f"      {j}. {comentario}")
-                print("=" * 40)
+        if not publicaciones:
+            print("No hay publicaciones para mostrar.")
+            return
 
+        print("Publicaciones:")
+        for i, publicacion in enumerate(publicaciones, 1):
+            print(f"{i}. Descripción: {publicacion.descripcion}")
+            print(f"   Fecha: {publicacion.fecha}")
+            print("   Comentarios:")
+            for j, comentario in enumerate(publicacion.comentarios, 1):
+                print(f"      {j}. {comentario}")
+            print("=" * 40)
+
+        while True:
             opcion_publicacion = input("Ingresa el número de la publicación que contiene el comentario a eliminar (o '0' para cancelar): ")
-            if opcion_publicacion.isdigit():
+
+            try:
                 opcion_publicacion = int(opcion_publicacion)
                 if 0 < opcion_publicacion <= len(publicaciones):
                     publicacion_a_eliminar_comentario = publicaciones[opcion_publicacion - 1]
 
-                    opcion_comentario = input("Ingresa el número del comentario que quieres eliminar (o '0' para cancelar): ")
-                    if opcion_comentario.isdigit():
-                        opcion_comentario = int(opcion_comentario)
-                        if 0 < opcion_comentario <= len(publicacion_a_eliminar_comentario.comentarios):
-                            comentario_a_eliminar = publicacion_a_eliminar_comentario.comentarios[opcion_comentario - 1]
-                            publicacion_a_eliminar_comentario.comentarios.remove(comentario_a_eliminar)
-                            print("Comentario eliminado exitosamente.")
-                        elif opcion_comentario == 0:
-                            print("Cancelaste la eliminación de comentario.")
-                        else:
-                            print("Número de comentario no válido.")
-                    else:
-                        print("Entrada no válida. Debes ingresar un número.")
+                    while True:
+                        opcion_comentario = input("Ingresa el número del comentario que quieres eliminar (o '0' para cancelar): ")
+
+                        try:
+                            opcion_comentario = int(opcion_comentario)
+                            if 0 < opcion_comentario <= len(publicacion_a_eliminar_comentario.comentarios):
+                                comentario_a_eliminar = publicacion_a_eliminar_comentario.comentarios[opcion_comentario - 1]
+                                publicacion_a_eliminar_comentario.comentarios.remove(comentario_a_eliminar)
+                                print("Comentario eliminado exitosamente.")
+                                break
+                            elif opcion_comentario == 0:
+                                print("Cancelaste la eliminación de comentario.")
+                                break
+                            else:
+                                print("Número de comentario no válido.")
+                        except ValueError:
+                            print("Entrada no válida. Debes ingresar un número entero.")
+                    break
                 elif opcion_publicacion == 0:
                     print("Cancelaste la eliminación de comentario.")
+                    break
                 else:
                     print("Número de publicación no válido.")
+            except ValueError:
+                print("Entrada no válida. Debes ingresar un número entero.")
+
+#Funcion refactorizada
+def eliminar_usuario_infractor(self, usuarios):
+    if not self.es_admin:
+        print("No tienes permisos para realizar esta acción.")
+        return
+
+    if not usuarios:
+        print("No hay usuarios para mostrar.")
+        return
+
+    print("Usuarios:")
+    for i, usuario in enumerate(usuarios, 1):
+        print(f"{i}. Username: {usuario.username}")
+
+    while True:
+        opcion_usuario = input("Ingresa el número del usuario a eliminar (o '0' para cancelar): ")
+
+        try:
+            opcion_usuario = int(opcion_usuario)
+            if 0 < opcion_usuario <= len(usuarios):
+                usuario_a_eliminar = usuarios[opcion_usuario - 1]
+                usuarios.remove(usuario_a_eliminar)
+                print(f"Usuario {usuario_a_eliminar.username} eliminado por infracciones múltiples.")
+                break
+            elif opcion_usuario == 0:
+                print("Cancelaste la eliminación de usuario.")
+                break
             else:
-                print("Entrada no válida. Debes ingresar un número.")
-        else:
-            print("No tienes permisos para realizar esta acción.")
+                print("Número de usuario no válido.")
+        except ValueError:
+            print("Entrada no válida. Debes ingresar un número entero.")
 
-    def eliminar_usuario_infractor(self, usuarios):
-        if self.es_admin:
-            if not usuarios:
-                print("No hay usuarios para mostrar.")
-                return
-
-            print("Usuarios:")
-            for i, usuario in enumerate(usuarios, 1):
-                print(f"{i}. Username: {usuario.username}")
-
-            opcion_usuario = input("Ingresa el número del usuario a eliminar (o '0' para cancelar): ")
-            if opcion_usuario.isdigit():
-                opcion_usuario = int(opcion_usuario)
-                if 0 < opcion_usuario <= len(usuarios):
-                    usuario_a_eliminar = usuarios[opcion_usuario - 1]
-                    usuarios.remove(usuario_a_eliminar)
-                    print(f"Usuario {usuario_a_eliminar.username} eliminado por infracciones múltiples.")
-                elif opcion_usuario == 0:
-                    print("Cancelaste la eliminación de usuario.")
-                else:
-                    print("Número de usuario no válido.")
-            else:
-                print("Entrada no válida. Debes ingresar un número.")
-        else:
-            print("No tienes permisos para realizar esta acción.")
 
 
 # Clase para representar un Profesor
