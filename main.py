@@ -3,6 +3,7 @@ import requests
 from usuarios import Usuario,Estudiante,Profesor
 from publicaciones import Publicacion
 from estadisticas import Estadisticas
+from datos import *
 #funcion para imprimir las estadisticas
 def imprimir_estadistica(titulo, datos):
     print(titulo)
@@ -37,13 +38,9 @@ def cargar_datos() -> tuple:
 
 #Menu principal de la app
 def menu():
-    usuarios,publicaciones = cargar_datos()
-    for publicacion in publicaciones:
-        for usuario in usuarios:
-            if publicacion.usuario == usuario.identification:
-                usuario.publicaciones.append(publicacion)
+    
     while True:
-        opcion= input("Bienvenido\n1. Gestion de perfiles\n2.Gestion multimedia\n3. Gestion de interacciones\n4. indicadores de gestion\n5. Salir.")
+        opcion= input("Bienvenido\n1. Gestion de perfiles\n2.Gestion multimedia\n3. Gestion de interacciones\n4. indicadores de gestion\n6. Salir.\n0. Cargar datos de 0")
         if opcion == "1":
             opcionGP = input("1. Registrar nuevo usuario\n2. Buscar Perfiles\n3.Cambiar informacion de la cuenta\n4.Borrar datos de la cuenta\n5.Acceder a la cuenta de otro usuario")
             if opcionGP =="1":
@@ -52,7 +49,7 @@ def menu():
                 lastName = input("Ingrese el apellido: ")
                 email = input("Ingrese el email: ")
                 username = input("Ingrese un username: ")
-                types = ("Ingrese el tipo de usuario (profesor o estudiante)")
+                types = input("Ingrese el tipo de usuario (profesor o estudiante): ")
                 if types.lower() == "estudiante":
                     major = input("Ingresa la carrera que estudias: ")
                     nuevo_usuario = usuario.registrar_estudiante(identification,firstName,lastName,email,username,major)
@@ -60,54 +57,105 @@ def menu():
                 elif types.lower() == "profesor":
                     departament = input("Ingrese el departamento: ")
                     nuevo_profesor = usuario.registrar_profesor(identification,firstName,lastName,email,username,departament) 
-                    usuarios.append(nuevo_profesor)
+                    usuarios.append(nuevo_profesor) 
                 else:
                     print("Ingrese un tipo correcto(Estudiante o Profesor)")
+                
+                guardar_usuarios(usuarios)
             elif opcionGP == "2":
                 pass
             elif opcionGP == "3":
-                username = "Hernan2"
+                usuarios = cargar_datos_usuarios()
+                username = input("Ingrese el username: ")
+                usuario_encontrado = None
+
+                # Buscar usuario por username
                 for usuario in usuarios:
                     if username == usuario.username:
+                        usuario_encontrado = usuario
                         print(f"Perfil encontrado: {usuario.firstname} {usuario.lastname}")
-                        firstname = input("Nuevo nombre: ")
-                        lastname = input("Nuevo apellido: ")
-                        email = input("Nuevo correo electrónico: ")
-                        new_username = input("Nuevo username: ")
+                        break
 
-                        if usuario.type == "profesor":
-                            department = input("Nuevo departamento: ")
-                            usuario.actualizar_informacion(firstname, lastname, email, new_username, department, "")
-                        elif usuario.type == "estudiante":
-                            major = input("Nueva carrera: ")
-                            usuario.actualizar_informacion(firstname, lastname, email, new_username, "", major)
+                if usuario_encontrado:
+                    print("Seleccione los campos a actualizar:")
+                    print("1. Nuevo nombre")
+                    print("2. Nuevo apellido")
+                    print("3. Nuevo correo electrónico")
+                    print("4. Nuevo username")
 
-                        print("\nInformación actualizada:")
-                        print(f"Nombre: {usuario.firstname} {usuario.lastname}")
-                        print(f"Correo Electrónico: {usuario.email}")
-                        print(f"Username: {usuario.username}")
-                        if usuario.type == "profesor":
-                            print(f"Departamento: {usuario.departament}")
-                        elif usuario.type == "estudiante":
-                            print(f"Carrera: {usuario.major}")
-                print("Perfil no encontrado.")
+                    if isinstance(usuario_encontrado, Profesor):
+                        print("5. Nuevo departamento")
+                    elif isinstance(usuario_encontrado, Estudiante):
+                        print("5. Nueva carrera")
+
+                    campos_a_actualizar = input("Ingrese los números de los campos a actualizar separados por comas: ")
+                    campos_a_actualizar = campos_a_actualizar.split(',')
+
+                    # Actualizar campos seleccionados
+                    for campo in campos_a_actualizar:
+                        campo = int(campo.strip())
+                        if campo == 1:
+                            firstname = input("Nuevo nombre: ")
+                            usuario_encontrado.firstname = firstname
+                        elif campo == 2:
+                            lastname = input("Nuevo apellido: ")
+                            usuario_encontrado.lastname = lastname
+                        elif campo == 3:
+                            email = input("Nuevo correo electrónico: ")
+                            usuario_encontrado.email = email
+                        elif campo == 4:
+                            new_username = input("Nuevo username: ")
+                            usuario_encontrado.username = new_username
+                        elif campo == 5:
+                            if isinstance(usuario_encontrado, Profesor):
+                                department = input("Nuevo departamento: ")
+                                usuario_encontrado.department = department
+                            elif isinstance(usuario_encontrado, Estudiante):
+                                major = input("Nueva carrera: ")
+                                usuario_encontrado.major = major
+
+                    print("\nInformación actualizada:")
+                    print(f"Nombre: {usuario_encontrado.firstname} {usuario_encontrado.lastname}")
+                    print(f"Correo Electrónico: {usuario_encontrado.email}")
+                    print(f"Username: {usuario_encontrado.username}")
+                    if isinstance(usuario_encontrado, Profesor):
+                        print(f"Departamento: {usuario_encontrado.department}")
+                    elif isinstance(usuario_encontrado, Estudiante):
+                        print(f"Carrera: {usuario_encontrado.major}")
+
+                    guardar_usuarios(usuarios)  # Guarda la información actualizada
+                else:
+                    print("Perfil no encontrado.")
+
             elif opcionGP == "4":
+                usuarios = cargar_datos_usuarios()
                 username = input("Ingrese el nombre del usuario: ")
-                Usuario.eliminar_cuenta(username,usuarios)
+
+                # Encuentra y elimina el usuario por su username
+                for usuario in usuarios:
+                    if username == usuario.username:
+                        usuarios.remove(usuario)
+                        print(f"La cuenta de {username} ha sido eliminada.")
+                        guardar_usuarios(usuarios)  # Guarda la lista actualizada de usuarios
+                        break
+                else:
+                    print("Usuario no encontrado.")
             elif opcionGP =="5":
                 pass
         elif opcion == "2":
             print("Gestión de multimedia")
-            opcionGM = input("")
+            opcionGM = input("1. Subir post\n2. Ver post de otro usuario\n3. Buscar post por filtros")
             if opcionGM == "1":
+                usuarios = cargar_datos_usuarios()
                 usuario_actual = Usuario.obtener_usuario_actual(usuarios)
                 if usuario_actual:
                     tipo_multimedia = input("Tipo de multimedia (foto o video): ")
                     descripcion = input("Descripción: ")
                     hashtags = input("Hashtags (separados por comas): ").split(',')
                     nueva_publicacion = usuario_actual.subir_publicacion(tipo_multimedia, descripcion, hashtags)
-                    publicaciones.append(nueva_publicacion)
+                    usuario_actual.publicaciones.append(nueva_publicacion)  # Agregar la publicación al usuario
                     print("Publicación subida exitosamente.")
+                    guardar_usuarios(usuarios)  # Guardar la información actualizada
                 else:
                     print("Debes iniciar sesión primero.")
             elif opcionGM == "2":
@@ -382,6 +430,14 @@ def menu():
                 imprimir_estadistica("Usuarios eliminados por infracciones", top_usuarios_eliminados)
         elif opcion == "6":
             break
+        elif opcion == "0":
+            usuarios,publicaciones = cargar_datos()
+            for publicacion in publicaciones:
+                for usuario in usuarios:
+                    if publicacion.usuario == usuario.identification:
+                        usuario.publicaciones.append(publicacion)
+            guardar_usuarios(usuarios)
+            guardar_publicaciones(publicaciones)
 if __name__ == "__main__":
     menu()
 

@@ -16,11 +16,11 @@ class Usuario:
         self.es_admin = False
 
     def registrar_profesor(self, identification, firstname, lastname, email, username, department):
-        nuevo_profesor = Profesor(identification, firstname, lastname, email, username, "profesor", department, [])
+        nuevo_profesor = nuevo_profesor = Profesor(identification, firstname, lastname, email, username, department, [])
         return nuevo_profesor
 
     def registrar_estudiante(self, identification, firstname, lastname, email, username, major):
-        nuevo_estudiante = Estudiante(identification, firstname, lastname, email, username, "estudiante", major, [])
+        nuevo_estudiante = Estudiante(identification, firstname, lastname, email, username, major, [])
         return nuevo_estudiante
     @classmethod
     def buscar_por_username(cls, username, datos):
@@ -307,49 +307,65 @@ class Usuario:
                 print("Entrada no válida. Debes ingresar un número entero.")
 
 #Funcion refactorizada
-def eliminar_usuario_infractor(self, usuarios):
-    if not self.es_admin:
-        print("No tienes permisos para realizar esta acción.")
-        return
+    def eliminar_usuario_infractor(self, usuarios):
+        if not self.es_admin:
+            print("No tienes permisos para realizar esta acción.")
+            return
 
-    if not usuarios:
-        print("No hay usuarios para mostrar.")
-        return
+        if not usuarios:
+            print("No hay usuarios para mostrar.")
+            return
 
-    print("Usuarios:")
-    for i, usuario in enumerate(usuarios, 1):
-        print(f"{i}. Username: {usuario.username}")
+        print("Usuarios:")
+        for i, usuario in enumerate(usuarios, 1):
+            print(f"{i}. Username: {usuario.username}")
 
-    while True:
-        opcion_usuario = input("Ingresa el número del usuario a eliminar (o '0' para cancelar): ")
+        while True:
+            opcion_usuario = input("Ingresa el número del usuario a eliminar (o '0' para cancelar): ")
 
-        try:
-            opcion_usuario = int(opcion_usuario)
-            if 0 < opcion_usuario <= len(usuarios):
-                usuario_a_eliminar = usuarios[opcion_usuario - 1]
-                usuarios.remove(usuario_a_eliminar)
-                print(f"Usuario {usuario_a_eliminar.username} eliminado por infracciones múltiples.")
-                break
-            elif opcion_usuario == 0:
-                print("Cancelaste la eliminación de usuario.")
-                break
-            else:
-                print("Número de usuario no válido.")
-        except ValueError:
-            print("Entrada no válida. Debes ingresar un número entero.")
+            try:
+                opcion_usuario = int(opcion_usuario)
+                if 0 < opcion_usuario <= len(usuarios):
+                    usuario_a_eliminar = usuarios[opcion_usuario - 1]
+                    usuarios.remove(usuario_a_eliminar)
+                    print(f"Usuario {usuario_a_eliminar.username} eliminado por infracciones múltiples.")
+                    break
+                elif opcion_usuario == 0:
+                    print("Cancelaste la eliminación de usuario.")
+                    break
+                else:
+                    print("Número de usuario no válido.")
+            except ValueError:
+                print("Entrada no válida. Debes ingresar un número entero.")
 
+
+    def obtener_interacciones(self):
+        total_interacciones = 0
+        for publicacion in self.publicaciones:
+            if self.username in publicacion.likes:
+                total_interacciones += 1  # Sumar un like por publicación
+            total_interacciones += len([comentario for comentario in publicacion.comentarios if self.username in comentario])
+            # Sumar los comentarios donde participa el usuario
+        return total_interacciones
+
+    def obtener_interacciones_usuario(self, usuarios):
+        total_interacciones_usuario = 0
+        for usuario in usuarios:
+            if usuario.username in self.following:
+                total_interacciones_usuario += usuario.obtener_interacciones()
+        return total_interacciones_usuario
 
 
 # Clase para representar un Profesor
 class Profesor(Usuario):
-    def __init__(self, id, firstName, lastName, email, username, department, following):
-        super().__init__(id, firstName, lastName, email, username, "profesor", department, following)
+    def __init__(self, identification, firstname, lastname, email, username, department, following):
+        super().__init__(identification, firstname, lastname, email, username, "profesor", department, following)
         self.department = department
 
 # Clase para representar un Estudiante
 class Estudiante(Usuario):
-    def __init__(self, id, firstName, lastName, email, username, major, following):
-        super().__init__(id, firstName, lastName, email, username, "estudiante", major, following)
+    def __init__(self, identification, firstname, lastname, email, username, major, following):
+        super().__init__(identification, firstname, lastname, email, username, "estudiante", major, following)
         self.major = major
         self.solicitudes_seguimiento = []
 
